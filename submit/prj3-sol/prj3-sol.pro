@@ -3,7 +3,6 @@
 
 % An employee is represented using the structure
 % employee(Name, Age, Department, Salary).
-
 % List of employees used for testing
 employees([ employee(tom, 33, cs, 85000.00),
 	    employee(joan, 23, ece, 110000.00),
@@ -16,9 +15,12 @@ employees([ employee(tom, 33, cs, 85000.00),
 % dept_employees(Employees, Dept, DeptEmployees): Given a list
 % Employees of employees and a department Dept match DeptEmployees
 % to the subsequence of Employees having department Dept.
-dept_employees(Employees, Dept, DeptEmployees) :-
-    'TODO'(Employees, Dept, DeptEmployees).
 
+dept_employees([], _, []).
+dept_employees(Employees, Dept, DeptEmployees) :- 
+    [Emp|Emps] = Employees, [_|Y] = DeptEmployees, Emp = employee(_, _, Dept, _), dept_employees(Emps, Dept, Y).
+dept_employees(Employees, Dept, _) :-
+    [Emp|_] = Employees, Emp \= employee(_, _, Dept, _).
 
 :- begin_tests(dept_employees, []).
 test(dept_employees_cs, all(Zs =
@@ -41,7 +43,11 @@ test(dept_employees_ce, all(Zs = [[]])) :-
 %%% #2 15-points
 % employees_salary_sum(Employees, Sum): succeeds iff Sum matches sum
 % of salaries of the employees in Employees.  Must be tail-recursive.
-employees_salary_sum(Employees, Sum) :- 'TODO'(Employees, Sum).
+
+get_salary(employee(_, _, _, Salary), S) :- S = Salary.
+employees_salary_sum([], 0).
+employees_salary_sum(Employees, Sum) :- 
+    [X|Xs] = Employees, employees_salary_sum(Xs, Sum1), get_salary(X, S), Sum is Sum1+S.
 
 :-begin_tests(employees_salary_sum).
 test(empty) :-
@@ -67,7 +73,12 @@ test(all) :-
 % an abitrary depth, match Z with the element in List indexed
 % successively by the indexes in Indexes. Match Z with the atom nil if
 % there is no such element.
-list_access(Indexes, List, Z) :- 'TODO'(Indexes, List, Z).
+
+list_access(Indexes, List, Z) :-
+    [X|Y] = Indexes, nth0(X, List, E), list_access(Y, E, Z).
+list_access([], List, Z) :- Z = List.
+list_access(Indexes, List, Z) :-
+    [X|_] = Indexes, not(nth0(X, List, _)), Z = nil.
 
 :- begin_tests(list_access).
 test(index_1, all(Z = [b])) :-
@@ -106,7 +117,9 @@ test(index_0_1, all(Z = [nil])) :-
 % are not processed.
 % The count will be the number of leaves in the tree corresponding to the
 % list structure of List.
-count_non_pairs(List, NNonPairs):- 'TODO'(List, NNonPairs).
+
+count_non_pairs([], 1).
+count_non_pairs(List, NNonPairs) :-  [_|Xs] = List, count_non_pairs(Xs, NonPairs), NNonPairs is NonPairs+1. 
 
 :- begin_tests(count_non_pairs).
 test(empty, nondet) :-
@@ -131,7 +144,15 @@ test(complex_fail, fail) :-
 % which is divisible by N.  Successive Int's are returned on backtracking
 % in the order they occur within list Ints.
 % Hint: use member/2 and the mod operator
-divisible_by(Ints, N, Int) :- 'TODO'(Ints, N, Int).
+
+%divisible_by([], _, []).
+%divisible_by(Ints, N, Int) :- 
+%    [H|T] = Ints, [H|T1] = Int, H mod N =:= 0, divisible_by(T, N, T1).
+%divisible_by(Ints, N, Int) :-
+%    [H|T] = Ints, T1 = Int, H mod N =\= 0, divisible_by(T, N, T1).
+zero(A) :- A = 0.
+my_mod(Int, N, A) :- A is mod(Int, N).
+divisible_by(Ints, N, Int) :- member(Int, Ints), my_mod(Int, N, A), zero(A).
 
 :- begin_tests(divisible_by).
 test(empty, fail) :-
@@ -151,7 +172,16 @@ test(none_divisible_by_3, fail) :-
 %   If A and B are Prolog regex's, then so is conc(A, B) representing AB.
 %   If A and B are Prolog regex's, then so is alt(A, B) representing A|B.
 %   If A is a Prolog regex, then so is kleene(A), representing A*.
-re_match(Re, List) :- 'TODO'(Re, List).
+
+rematch(X, [Y]) :- X = Y. 
+rematch(conc(X, Y), [X, Y]).
+rematch(alt(X, _), [X]).
+rematch(alt(_, Y), [Y]).
+rematch(kleene(_), []).
+rematch(kleene(X), [X]).
+rematch(kleene(X), Y) :- [X|Xs] = Y, rematch(kleene(X), Xs).
+rematch(conc(kleene(X), Y), Z) :- [X|Xs] = Z, rematch(conc(kleene(X), Y), Xs).
+re_match(Re, List) :- rematch(Re, List).
 
 :- begin_tests(re_match).
 test(single) :-
